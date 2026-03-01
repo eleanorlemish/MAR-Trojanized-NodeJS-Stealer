@@ -49,6 +49,7 @@ The sample is a **76.68 MB Windows PE (x64)** binary built using the `pkg` npm m
 | **Signature** | Unsigned |
 | **VT Detection** | 2/69 (2026-02-26) |
 | **Attribution** | Genesis Project / GENESIScrazy |
+| **VirusTotal** | [View on VirusTotal](https://www.virustotal.com/gui/file/f946f54953187eea89d4a1d0d5999be386bd9af0c3be0270dd42d9d28372ec27) |
 
 ---
 
@@ -149,6 +150,7 @@ The sample is a **76.68 MB Windows PE (x64)** binary built using the `pkg` npm m
 - [Zscaler — NodeLoader: Node.js Malware Evading Detection](https://www.zscaler.com/blogs/security-research/nodeloader-exposed-node-js-malware-evading-detection)
 - [Microsoft — Threat Actors Misuse Node.js to Deliver Malware](https://www.microsoft.com/en-us/security/blog/2025/04/15/threat-actors-misuse-node-js-to-deliver-malware-and-other-malicious-payloads/)
 - [MITRE ATT&CK Framework](https://attack.mitre.org/)
+- [VirusTotal — Sample Analysis](https://www.virustotal.com/gui/file/f946f54953187eea89d4a1d0d5999be386bd9af0c3be0270dd42d9d28372ec27)
 
 ---
 
