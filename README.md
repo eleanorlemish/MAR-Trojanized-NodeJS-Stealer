@@ -13,7 +13,7 @@ This repository contains a detailed malware analysis report for a trojanized Nod
 
 The sample is a **76.68 MB Windows PE (x64)** binary built using the `pkg` npm module. At the time of analysis, only **2 of 69** VirusTotal vendors flagged it as malicious.
 
-**All three obfuscation layers were statically defeated**, revealing confirmed C2 infrastructure, exfiltration endpoints, and the complete module inventory with deobfuscated variable mappings.
+**All three obfuscation layers were statically defeated**, revealing the confirmed C2 domain (`genesishaha.fun`), exfiltration endpoints, operator handle (`GENESIScrazy`), and the complete module inventory with deobfuscated variable mappings.
 
 📄 **[Read the full report (PDF)](MAR_Trojanized_NodeJS_Stealer.pdf)**
 
@@ -76,15 +76,16 @@ The sample is a **76.68 MB Windows PE (x64)** binary built using the `pkg` npm m
 | `https://code-api.xyz/?p=${TOKEN}` | Token exfil URL pattern | **Confirmed plaintext** |
 | `t.me/genesisproject` | Telegram (operator alerts) | **Confirmed plaintext** |
 | `gofile.io` / `gofile.io/uploadFile` | File exfil service | **Confirmed plaintext** |
-| `nqRYG4` (obfuscated variable) | Primary C2 domain | Pending `decode_layer3.py` |
-| `eIcSIM` (obfuscated variable) | Socket.io C2 URL | Pending `decode_layer3.py` |
+| `genesishaha.fun` | Primary C2 domain (`nqRYG4`) | **Confirmed — Layer 3 decoded** |
+| `https://genesishaha.fun` | Socket.io C2 base URL (`eIcSIM`) | **Confirmed — Layer 3 decoded** |
 
 ### C2 API Paths
 | Endpoint | Function |
 |----------|----------|
-| `https://${nqRYG4}/paths` | Configuration/tasking |
-| `https://api.${nqRYG4}/send-embed` | Data exfiltration |
-| `https://api.${nqRYG4}/send-embed-viewer` | Rich-data exfiltration |
+| `https://genesishaha.fun/paths` | Configuration/tasking |
+| `https://api.genesishaha.fun/send-embed` | Data exfiltration |
+| `https://api.genesishaha.fun/send-embed-viewer` | Rich-data exfiltration |
+| `https://genesishaha.fun/victims/*/dashboard` | Control Web Panel |
 
 ### Discord API Targets
 - `discord.com/api/v10/users/${id}/profile` — User profiling
