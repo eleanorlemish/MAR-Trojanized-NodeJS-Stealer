@@ -2,15 +2,18 @@
 
 **Author:** Eleanor R. Lemish — Independent Security Researcher  
 **Date:** February 28, 2026  
-**TLP:** GREEN — May be shared within the cybersecurity community
+**TLP:** GREEN — May be shared within the cybersecurity community  
+**Attribution:** Genesis Project (`t.me/genesisproject`)
 
 ---
 
 ## Overview
 
-This repository contains a detailed malware analysis report for a trojanized Node.js information stealer distributed via **pokemoncraft.com**, a fake game mod website promoted through Discord social engineering.
+This repository contains a detailed malware analysis report for a trojanized Node.js information stealer attributed to the **Genesis Project** threat actor group, distributed via **pokemoncraft.com** — a fake game mod website promoted through Discord social engineering.
 
-The sample is a **76.68 MB Windows PE (x64)** binary built using the `pkg` npm module, which bundles a complete Node.js v18.5.0 runtime, V8 engine, and all malicious dependencies into a single self-contained executable. At the time of analysis, only **2 of 69** VirusTotal vendors flagged it as malicious.
+The sample is a **76.68 MB Windows PE (x64)** binary built using the `pkg` npm module. At the time of analysis, only **2 of 69** VirusTotal vendors flagged it as malicious.
+
+**All three obfuscation layers were statically defeated**, revealing confirmed C2 infrastructure, exfiltration endpoints, and the complete module inventory with deobfuscated variable mappings.
 
 📄 **[Read the full report (PDF)](MAR_Trojanized_NodeJS_Stealer.pdf)**
 
@@ -18,14 +21,19 @@ The sample is a **76.68 MB Windows PE (x64)** binary built using the `pkg` npm m
 
 ## Key Findings
 
-- **Delivery:** Discord social engineering → fake game mod site (pokemoncraft.com) → trojanized installer
-- **Packing:** `pkg` npm module bundles Node.js runtime + obfuscated JS payload into single PE; 42 MB overlay
-- **Payload:** `crypted.js` — obfuscator.io-style obfuscation with string rotation array, hex indices, randomized names
-- **C2:** socket.io over WSS with MsgPack binary serialization; three-layer transport fallback (WebSocket → HTTP long-polling → WebTransport/HTTP/3)
-- **Credential Theft:** DPAPI decryption (`@primno/dpapi`) + SQLite3 direct access to Chrome/Edge Login Data, Cookies, and Web Data
-- **Screen Capture:** `screenshot-desktop` with `pixelmatch` change detection — only exfiltrates when screen content changes
-- **Exfiltration:** Encrypted ZIP archives via multipart/form-data upload over C2 channel
-- **Anti-Forensics:** Installer self-deletes after payload deployment
+- **Threat Actor:** Genesis Project (`t.me/genesisproject`) — commercial stealer/RAT service
+- **Delivery:** Discord social engineering → pokemoncraft.com → trojanized game mod installer
+- **Packing:** `pkg` npm module bundles Node.js v18.5.0 runtime + payload into single PE; 42 MB overlay
+- **Obfuscation:** Three-layer architecture:
+  - **Layer 1:** 8-table base91 cipher (314 strings, rotation R=267)
+  - **Layer 2:** AES-256-CBC encrypted payload (PBKDF2-HMAC-SHA512, 100k iterations) — parameters statically recovered
+  - **Layer 3:** Second base91 cipher (2 tables, two-piece rotation) — C2 domain assembled from encoded fragments
+- **C2:** socket.io over WSS with MsgPack binary serialization; three-layer transport fallback (WebSocket → HTTP long-polling → WebTransport/HTTP/3); C2 URL assembled from 3-4 encoded fragments at runtime (T1568)
+- **Credential Theft:** DPAPI decryption (`@primno/dpapi`) + SQLite3 access to Chrome/Firefox/Opera/Edge databases
+- **Discord Theft:** Token theft + API v8/v9/v10 user profiling and guild enumeration
+- **Screen Capture:** `screenshot-desktop` with `pixelmatch` change detection — only exfiltrates changed frames
+- **Exfiltration:** Multi-channel: socket.io C2, `gofile.io` (file upload), `code-api.xyz` (token storage), Discord embeds
+- **Anti-Forensics:** Self-deleting installer; console output suppressed; anti-debug guards; control flow flattening
 
 ---
 
@@ -38,10 +46,9 @@ The sample is a **76.68 MB Windows PE (x64)** binary built using the `pkg` npm m
 | **SHA-1** | `b033c0ed7a98c43f365ed924e465f3732913c8d6` |
 | **Imphash** | `4d0fb8dc9ee470058274f448bebbb85f` |
 | **File Size** | 76.68 MB (80,402,188 bytes) |
-| **File Type** | PE32+ executable (console) x86-64 |
 | **Signature** | Unsigned |
-| **VT Detection** | 2/69 (as of 2026-02-26) |
-| **First Seen** | 2026-02-26 |
+| **VT Detection** | 2/69 (2026-02-26) |
+| **Attribution** | Genesis Project |
 
 ---
 
@@ -49,40 +56,71 @@ The sample is a **76.68 MB Windows PE (x64)** binary built using the `pkg` npm m
 
 | Tactic | Techniques |
 |--------|------------|
-| **Execution** | T1059.007 (JavaScript), T1106 (Native API) |
-| **Defense Evasion** | T1027 (Obfuscation), T1027.002 (Software Packing), T1140 (Runtime Deobfuscation), T1070.004 (File Deletion) |
-| **Credential Access** | T1555.003 (Browser Credentials), T1539 (Session Cookies) |
-| **Discovery** | T1082 (System Info), T1083 (File/Directory Discovery), T1057 (Process Discovery) |
-| **Collection** | T1113 (Screen Capture), T1115 (Clipboard), T1005 (Local System Data), T1560.001 (Archive via Library) |
-| **Exfiltration** | T1041 (Over C2 Channel), T1567 (Cloud Account) |
-| **Command & Control** | T1071.001 (Web Protocols/WebSockets), T1008 (Fallback Channels), T1573.001 (Encrypted Channel) |
+| **Initial Access** | T1566 (Phishing/Malvertising) |
+| **Execution** | T1204.002 (User Execution), T1059.007 (JavaScript), T1059.003 (Windows Cmd), T1106 (Native API), T1218 (System Binary Proxy) |
+| **Defense Evasion** | T1027 (Obfuscation), T1027.002 (Packing), T1027.005 (Indicator Removal from Tools), T1027.013 (Encrypted/Encoded File), T1140 (Runtime Deobfuscation), T1070.004 (File Deletion), T1562 (Disable Tools), T1497 (Sandbox Evasion), T1036 (Masquerading), T1564 (Hide Artifacts) |
+| **Credential Access** | T1555.003 (Browser Credentials), T1003.005 (DPAPI), T1539 (Session Cookies), T1552.001 (Credentials in Files) |
+| **Discovery** | T1082 (System Info), T1083 (File/Dir Discovery), T1057 (Process Discovery), T1518.001 (Browser Extensions), T1012 (Query Registry), T1087 (Account Discovery) |
+| **Collection** | T1113 (Screen Capture), T1115 (Clipboard), T1005 (Local System), T1213 (Info Repositories), T1560.002 (Archive via Library), T1074 (Data Staged), T1056 (Input Capture) |
+| **C2** | T1071.001 (Web Protocols), T1071.002 (File Transfer), T1008 (Fallback Channels), T1573 (Encrypted Channel), T1568 (Dynamic Resolution), T1132.001 (Data Encoding), T1102.001 (Dead Drop Resolver) |
+| **Exfiltration** | T1041 (Over C2), T1567.002 (Cloud Storage), T1020 (Automated), T1030 (Size Limits) |
 
 ---
 
-## IOC Summary
+## Confirmed IOCs
 
-### Network
-| Indicator | Type |
-|-----------|------|
-| `pokemoncraft.com` | Distribution domain (reported; now offline) |
-| socket.io over WSS (MsgPack) | C2 protocol |
-| C2 URL embedded in `crypted.js` | Not yet deobfuscated |
+### Threat Actor Infrastructure
+| IOC | Type | Status |
+|-----|------|--------|
+| `code-api.xyz` | C2 domain (token exfil) | **Confirmed plaintext** |
+| `https://code-api.xyz/?p=${TOKEN}` | Token exfil URL pattern | **Confirmed plaintext** |
+| `t.me/genesisproject` | Telegram (operator alerts) | **Confirmed plaintext** |
+| `gofile.io` / `gofile.io/uploadFile` | File exfil service | **Confirmed plaintext** |
+| `nqRYG4` (obfuscated variable) | Primary C2 domain | Pending `decode_layer3.py` |
+| `eIcSIM` (obfuscated variable) | Socket.io C2 URL | Pending `decode_layer3.py` |
 
-### Host
-| Indicator | Type |
-|-----------|------|
-| `C:\snapshot\builder\crypted.js` | Payload path (pkg virtual FS) |
-| `REG QUERY HKLM\...\Cryptography /v MachineGuid` | Fingerprinting |
-| `screenCapture_1.3.2.bat` | Screen capture helper |
-| `Lxlxtp()` | Obfuscation string array function |
+### C2 API Paths
+| Endpoint | Function |
+|----------|----------|
+| `https://${nqRYG4}/paths` | Configuration/tasking |
+| `https://api.${nqRYG4}/send-embed` | Data exfiltration |
+| `https://api.${nqRYG4}/send-embed-viewer` | Rich-data exfiltration |
+
+### Discord API Targets
+- `discord.com/api/v10/users/${id}/profile` — User profiling
+- `discord.com/api/v8/guilds/${id}/invites` — Guild enumeration
+- `cdn.discordapp.com/avatars/` — Avatar fetching
+
+### YARA Rule Targets
+| String | Context |
+|--------|---------|
+| `qqkM5HynUl3Cqc3nmafzuKi+eg1PVDS4` | PBKDF2 password (Layer 2) |
+| `UHTaXURgNzVMwKn8jkSgiw==` | PBKDF2 salt (base64) |
+| `code-api.xyz` | Token exfiltration domain |
+| `t.me/genesisproject` | Operator Telegram channel |
+
+---
+
+## Layer 2 Decryption Parameters (Statically Recovered)
+
+| Parameter | Value |
+|-----------|-------|
+| Algorithm | AES-256-CBC |
+| KDF | PBKDF2-HMAC-SHA512 (100,000 iterations) |
+| Password | `qqkM5HynUl3Cqc3nmafzuKi+eg1PVDS4` |
+| Salt (b64) | `UHTaXURgNzVMwKn8jkSgiw==` |
+| IV (b64) | `5lS8fyfaLAgt60BTDCM6KQ==` |
+
+> **Note:** These decrypt the inner JS payload (Layer 3), NOT browser credentials.
 
 ---
 
 ## Attribution Leads
 
-- **`runneradmin`** in build paths — GitHub Actions CI/CD runner (OPSEC failure)
-- **`devetry`** username embedded in screenshot-desktop module path (developer machine leak)
-- TTP overlap with **Stealit** (Fortinet, Oct 2025) and **NodeLoader** (Zscaler, Apr 2025) campaigns
+- **Genesis Project** — `t.me/genesisproject` (confirmed in decrypted config)
+- **`runneradmin`** in build paths — GitHub Actions CI/CD runner
+- **`devetry`** username in screenshot-desktop module path — developer machine leak
+- **Hardcoded crypto material** — PBKDF2 password/salt/IV statically recoverable (OPSEC failure)
 
 ---
 
@@ -90,7 +128,7 @@ The sample is a **76.68 MB Windows PE (x64)** binary built using the `pkg` npm m
 
 ```
 ├── README.md                            # This file
-├── MAR_Trojanized_NodeJS_Stealer.pdf    # Full analysis report
+├── MAR_Trojanized_NodeJS_Stealer.pdf    # Full analysis report (v3)
 ```
 
 ---
