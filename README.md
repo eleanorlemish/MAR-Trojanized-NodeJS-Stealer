@@ -140,6 +140,9 @@ The sample is a **76.68 MB Windows PE (x64)** binary built using the `pkg` npm m
 │   ├── decode_strings.py                # Layer 1: 8-table base91 decoder
 │   ├── decrypt_config.py                # Layer 2: AES-256-CBC decryption
 │   └── decode_layer3.py                 # Layer 3: Second base91 decoder
+├── yara/
+│   ├── genesis_stealer.yar              # YARA detection rule (three-tier condition)
+
 ```
 
 ---
